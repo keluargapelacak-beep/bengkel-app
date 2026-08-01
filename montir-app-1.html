@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#222121">
+<title>Montir App — Bengkel Mobil 24 Jam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFCFC; --bg-alt:#E5E4E3; --ink:#222121; --ink-soft:#2A2A2A;
+    --teal:#4CD1D6; --teal-dark:#23A6AC; --teal-deep:#167276;
+    --danger:#e5625f; --line:rgba(34,33,33,0.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg-alt); color:var(--ink); font-family:'Inter',sans-serif;
+    overflow:hidden; position:fixed; inset:0;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif; font-weight:700;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{font-family:inherit; border:none; cursor:pointer;}
+  a{color:inherit; text-decoration:none;}
+
+  /* App shell: phone-frame feel, fills viewport */
+  #app{
+    max-width:480px; margin:0 auto; height:100%; background:var(--bg);
+    position:relative; display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 0 40px rgba(0,0,0,0.15);
+  }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen{
+    position:absolute; inset:0; z-index:100; background:var(--ink); color:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px; text-align:center;
+  }
+  #loginScreen .mark{
+    width:64px; height:64px; border-radius:16px; background:var(--teal); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700;
+    margin-bottom:18px;
+  }
+  #loginScreen h1{font-size:22px; margin-bottom:6px;}
+  #loginScreen p{opacity:0.65; font-size:13.5px; margin-bottom:28px;}
+  #loginScreen input{
+    width:100%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.16);
+    color:#fff; border-radius:11px; padding:14px 16px; font-size:15px; margin-bottom:12px; outline:none;
+  }
+  #loginScreen input:focus{border-color:var(--teal);}
+  #loginScreen input::placeholder{color:rgba(255,255,255,0.35);}
+  #loginBtn{
+    width:100%; background:var(--teal); color:var(--ink); font-weight:700; font-size:15px;
+    padding:15px; border-radius:11px; margin-top:6px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px; background:var(--ink); color:#fff;
+    padding-top:calc(16px + env(safe-area-inset-top));
+    flex-shrink:0;
+  }
+  .topbar .who{display:flex; align-items:center; gap:11px;}
+  .avatar{
+    width:40px; height:40px; border-radius:50%; background:var(--teal); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px;
+  }
+  .who .name{font-weight:600; font-size:14.5px;}
+  .who .role{font-size:11.5px; opacity:0.55; font-family:'JetBrains Mono';}
+  .online-toggle{
+    display:flex; align-items:center; gap:9px; background:rgba(255,255,255,0.08);
+    padding:7px 12px 7px 14px; border-radius:100px;
+  }
+  .online-toggle .lbl{font-size:12px; font-family:'JetBrains Mono'; opacity:0.8;}
+  .switch{
+    width:42px; height:24px; border-radius:100px; background:rgba(255,255,255,0.18);
+    position:relative; transition:background .25s;
+  }
+  .switch::before{
+    content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%;
+    background:#fff; transition:transform .25s;
+  }
+  .switch.on{background:var(--teal);}
+  .switch.on::before{transform:translateX(18px); background:var(--ink);}
+
+  /* ---------- Body / scroll area ---------- */
+  .screen{
+    flex:1; overflow-y:auto; padding:18px 18px 90px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .screen::-webkit-scrollbar{display:none;}
+
+  .status-banner{
+    border-radius:14px; padding:16px; margin-bottom:16px; font-size:13.5px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .status-banner.offline{background:var(--bg-alt); color:var(--ink-soft);}
+  .status-banner.online{background:rgba(76,209,214,0.14); color:var(--teal-deep); border:1px solid rgba(76,209,214,0.35);}
+  .dot{width:8px; height:8px; border-radius:50%; background:currentColor; flex-shrink:0;}
+  .status-banner.online .dot{animation:pulse 1.6s infinite;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(76,209,214,0.55);} 70%{box-shadow:0 0 0 8px rgba(76,209,214,0);} 100%{box-shadow:0 0 0 0 rgba(76,209,214,0);}
+  }
+
+  .section-title{font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); opacity:0.55; margin:22px 0 10px; font-weight:600;}
+  .section-title:first-child{margin-top:0;}
+
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--ink-soft); opacity:0.55; font-size:13.5px;
+  }
+  .empty-state .ic{font-size:34px; margin-bottom:10px;}
+
+  /* Active order card */
+  .order-card{
+    background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px;
+    box-shadow:0 4px 18px rgba(34,33,33,0.06);
+  }
+  .order-card .top-row{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
+  .order-card .cust-name{font-weight:700; font-size:15.5px;}
+  .order-card .layanan-tag{
+    font-family:'JetBrains Mono'; font-size:11px; background:rgba(76,209,214,0.15); color:var(--teal-deep);
+    padding:4px 9px; border-radius:100px;
+  }
+  .order-card .info-row{display:flex; gap:8px; font-size:13.5px; margin-bottom:7px; align-items:flex-start;}
+  .order-card .info-row .ic{width:16px; flex-shrink:0; opacity:0.5;}
+  .order-card .info-row .val{color:var(--ink-soft);}
+  .steps{display:flex; gap:6px; margin:14px 0;}
+  .steps .step{flex:1; height:4px; border-radius:3px; background:var(--bg-alt);}
+  .steps .step.done{background:var(--teal);}
+  .action-row{display:flex; gap:10px; margin-top:14px;}
+  .action-row .btn{
+    flex:1; padding:12px; border-radius:10px; font-weight:600; font-size:13.5px; text-align:center;
+  }
+  .btn-call{background:var(--bg-alt); color:var(--ink);}
+  .btn-nav{background:var(--ink); color:#fff;}
+  .btn-advance{background:var(--teal); color:var(--ink); width:100%; padding:13px; border-radius:10px; font-weight:700; font-size:14px; margin-top:10px;}
+  .btn-cancel{background:none; color:var(--danger); width:100%; padding:10px; font-size:12.5px; margin-top:4px; font-weight:600;}
+
+  /* History item */
+  .hist-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background:#fff; border:1px solid var(--line); border-radius:12px; padding:13px 15px; margin-bottom:9px;
+  }
+  .hist-item .l{font-size:13.5px; font-weight:600;}
+  .hist-item .r{font-size:11.5px; font-family:'JetBrains Mono'; opacity:0.55;}
+  .hist-item .layanan{font-size:12px; opacity:0.6; margin-top:2px;}
+
+  /* Account screen */
+  .acc-card{background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:14px;}
+  .acc-row{display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .acc-row:last-child{border-bottom:none;}
+  .acc-row .k{opacity:0.55;}
+  .acc-row .v{font-weight:600;}
+  .btn-logout{
+    width:100%; background:none; border:1.5px solid var(--danger); color:var(--danger);
+    padding:13px; border-radius:11px; font-weight:600; font-size:14px;
+  }
+  .sound-toggle-row{display:flex; justify-content:space-between; align-items:center; padding:14px 0;}
+
+  /* ---------- Bottom nav ---------- */
+  .bottomnav{
+    position:absolute; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line);
+    display:flex; padding-bottom:env(safe-area-inset-bottom); z-index:20;
+  }
+  .navbtn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:11px 0 9px; background:none; color:var(--ink-soft); opacity:0.45; font-size:11px; font-weight:600;
+    position:relative;
+  }
+  .navbtn.active{opacity:1; color:var(--teal-deep);}
+  .navbtn .ic{font-size:19px;}
+  .navbtn .badge{
+    position:absolute; top:5px; right:calc(50% - 20px); background:var(--danger); color:#fff;
+    font-size:9.5px; font-weight:700; width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---------- Incoming order overlay (ojol style) ---------- */
+  #incomingOverlay{
+    position:absolute; inset:0; z-index:90; background:rgba(0,0,0,0.55);
+    display:none; align-items:flex-end;
+  }
+  #incomingOverlay.show{display:flex;}
+  .incoming-sheet{
+    width:100%; background:#fff; border-radius:22px 22px 0 0; padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    animation:sheetUp .35s ease;
+  }
+  @keyframes sheetUp{ from{transform:translateY(100%);} to{transform:translateY(0);} }
+  .timer-bar{height:5px; border-radius:3px; background:var(--bg-alt); overflow:hidden; margin-bottom:16px;}
+  .timer-bar .fill{height:100%; background:var(--teal); width:100%; transform-origin:left;}
+  .incoming-sheet .eyebrow-line{
+    font-family:'JetBrains Mono'; font-size:11.5px; color:var(--teal-deep); text-transform:uppercase;
+    letter-spacing:0.06em; margin-bottom:8px; font-weight:600;
+  }
+  .incoming-sheet h2{font-size:19px; margin-bottom:14px;}
+  .incoming-detail{background:var(--bg-alt); border-radius:12px; padding:14px; margin-bottom:18px;}
+  .incoming-detail .row{display:flex; gap:9px; font-size:13.5px; margin-bottom:8px;}
+  .incoming-detail .row:last-child{margin-bottom:0;}
+  .incoming-detail .row .ic{width:16px; opacity:0.55;}
+  .incoming-btns{display:flex; gap:12px;}
+  .incoming-btns button{flex:1; padding:15px; border-radius:12px; font-weight:700; font-size:15px;}
+  .btn-reject{background:var(--bg-alt); color:var(--ink-soft);}
+  .btn-accept{background:var(--teal); color:var(--ink);}
+
+  .toast{
+    position:absolute; left:50%; bottom:100px; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:11px 20px; border-radius:100px; font-size:13px;
+    z-index:200; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="mark">24</div>
+    <h1>Montir App</h1>
+    <p>Bengkel Mobil 24 Jam — masuk untuk mulai menerima order panggilan.</p>
+    <input type="text" id="inNama" placeholder="Nama Montir">
+    <input type="tel" id="inHp" placeholder="No. WhatsApp Montir">
+    <button id="loginBtn">Masuk & Mulai Kerja</button>
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="who">
+      <div class="avatar" id="avatarInit">M</div>
+      <div>
+        <div class="name" id="topName">Montir</div>
+        <div class="role">BENGKEL MOBIL 24 JAM</div>
+      </div>
+    </div>
+    <div class="online-toggle" id="onlineToggle">
+      <span class="lbl" id="onlineLbl">OFFLINE</span>
+      <div class="switch" id="onlineSwitch"></div>
+    </div>
+  </div>
+
+  <!-- BERANDA -->
+  <div class="screen" id="screenHome">
+    <div class="status-banner offline" id="statusBanner">
+      <span class="dot"></span>
+      <span id="statusText">Anda sedang offline. Aktifkan status online untuk menerima order.</span>
+    </div>
+
+    <div class="section-title">Order Aktif</div>
+    <div id="activeOrderWrap">
+      <div class="empty-state"><div class="ic">🔧</div>Belum ada order aktif saat ini.</div>
+    </div>
+  </div>
+
+  <!-- RIWAYAT -->
+  <div class="screen" id="screenHistory" style="display:none;">
+    <div class="section-title">Riwayat Order Selesai</div>
+    <div id="historyWrap">
+      <div class="empty-state"><div class="ic">📋</div>Belum ada riwayat order.</div>
+    </div>
+  </div>
+
+  <!-- AKUN -->
+  <div class="screen" id="screenAccount" style="display:none;">
+    <div class="section-title">Profil Montir</div>
+    <div class="acc-card">
+      <div class="acc-row"><span class="k">Nama</span><span class="v" id="accName">-</span></div>
+      <div class="acc-row"><span class="k">No. WhatsApp</span><span class="v" id="accHp">-</span></div>
+      <div class="acc-row"><span class="k">Total Order Selesai</span><span class="v" id="accTotal">0</span></div>
+    </div>
+    <div class="acc-card">
+      <div class="sound-toggle-row">
+        <span style="font-size:13.5px;">🔔 Suara notifikasi order baru</span>
+        <div class="switch on" id="soundSwitch"></div>
+      </div>
+    </div>
+    <button class="btn-logout" id="logoutBtn">Keluar dari Akun</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="navbtn active" data-screen="home"><span class="ic">🏠</span>Beranda</button>
+    <button class="navbtn" data-screen="history"><span class="ic">🕓</span>Riwayat</button>
+    <button class="navbtn" data-screen="account"><span class="ic">👤</span>Akun</button>
+  </div>
+
+  <!-- INCOMING ORDER OVERLAY -->
+  <div id="incomingOverlay">
+    <div class="incoming-sheet">
+      <div class="timer-bar"><div class="fill" id="timerFill"></div></div>
+      <div class="eyebrow-line">📢 Order Panggilan Baru</div>
+      <h2 id="incName">-</h2>
+      <div class="incoming-detail">
+        <div class="row"><span class="ic">📍</span><span id="incLokasi">-</span></div>
+        <div class="row"><span class="ic">🚗</span><span id="incMobil">-</span></div>
+        <div class="row"><span class="ic">🛠️</span><span id="incLayanan">-</span></div>
+      </div>
+      <div class="incoming-btns">
+        <button class="btn-reject" id="rejectBtn">Tolak</button>
+        <button class="btn-accept" id="acceptBtn">Terima Order</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ============================================================
+   FIREBASE — WAJIB diisi dengan config yang SAMA PERSIS seperti
+   yang dipakai di website customer (bengkel-mobil-24jam.html)
+   agar order dari customer bisa masuk ke app montir ini.
+============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyB838cDBYT3zgR278Ju0p7y6XqIOkXjAXM",
+  authDomain: "buat-bengkel.firebaseapp.com",
+  databaseURL: "https://buat-bengkel-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "buat-bengkel"
+};
+
+let db = null;
+let firebaseReady = false;
+(function loadFirebase(){
+  const s1 = document.createElement('script');
+  s1.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
+  document.head.appendChild(s1);
+  s1.onload = () => {
+    const s2 = document.createElement('script');
+    s2.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js";
+    document.head.appendChild(s2);
+    s2.onload = () => {
+      if(firebaseConfig.databaseURL){
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        firebaseReady = true;
+        initOrderListener();
+      } else {
+        showToast('⚠️ Firebase belum dikonfigurasi');
+      }
+    };
+  };
+})();
+
+/* ---------- State ---------- */
+let montir = JSON.parse(localStorage.getItem('montirProfile') || 'null');
+let isOnline = localStorage.getItem('montirOnline') === '1';
+let soundOn = localStorage.getItem('montirSound') !== '0';
+let activeOrderId = localStorage.getItem('activeOrderId') || null;
+let seenOrderIds = JSON.parse(localStorage.getItem('seenOrderIds') || '[]');
+let pendingQueue = [];
+let currentIncomingId = null;
+let timerInterval = null;
+let allOrdersCache = {};
+
+/* ---------- Init UI from state ---------- */
+function initUI(){
+  if(montir && montir.nama){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('topName').textContent = montir.nama;
+    document.getElementById('avatarInit').textContent = montir.nama.charAt(0).toUpperCase();
+    document.getElementById('accName').textContent = montir.nama;
+    document.getElementById('accHp').textContent = montir.hp;
+  }
+  setOnlineState(isOnline, true);
+  document.getElementById('soundSwitch').classList.toggle('on', soundOn);
+}
+
+function setOnlineState(state, silent){
+  isOnline = state;
+  localStorage.setItem('montirOnline', state ? '1' : '0');
+  document.getElementById('onlineSwitch').classList.toggle('on', state);
+  document.getElementById('onlineLbl').textContent = state ? 'ONLINE' : 'OFFLINE';
+  const banner = document.getElementById('statusBanner');
+  banner.className = 'status-banner ' + (state ? 'online' : 'offline');
+  document.getElementById('statusText').textContent = state
+    ? 'Anda online — siap menerima order panggilan montir.'
+    : 'Anda sedang offline. Aktifkan status online untuk menerima order.';
+  if(state && !silent) checkQueueForIncoming();
+}
+
+/* ---------- Login ---------- */
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const nama = document.getElementById('inNama').value.trim();
+  const hp = document.getElementById('inHp').value.trim();
+  if(!nama || !hp){ showToast('Isi nama & no. WhatsApp dulu'); return; }
+  montir = { nama, hp };
+  localStorage.setItem('montirProfile', JSON.stringify(montir));
+  initUI();
+  showToast('Selamat bekerja, ' + nama + '!');
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  if(!confirm('Yakin keluar dari akun montir?')) return;
+  localStorage.removeItem('montirProfile');
+  localStorage.removeItem('activeOrderId');
+  location.reload();
+});
+
+/* ---------- Online toggle ---------- */
+document.getElementById('onlineToggle').addEventListener('click', () => {
+  setOnlineState(!isOnline);
+});
+
+document.getElementById('soundSwitch').addEventListener('click', function(){
+  soundOn = !soundOn;
+  localStorage.setItem('montirSound', soundOn ? '1' : '0');
+  this.classList.toggle('on', soundOn);
+});
+
+/* ---------- Bottom nav ---------- */
+document.querySelectorAll('.navbtn').forEach(btn => {
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    ['home','history','account'].forEach(s => {
+      document.getElementById('screen' + s.charAt(0).toUpperCase() + s.slice(1)).style.display = 'none';
+    });
+    document.getElementById('screen' + this.dataset.screen.charAt(0).toUpperCase() + this.dataset.screen.slice(1)).style.display = 'block';
+  });
+});
+
+/* ---------- Toast ---------- */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ---------- Beep sound (Web Audio, no external file) ---------- */
+function playBeep(){
+  if(!soundOn) return;
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.28].forEach(delay => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.24);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.26);
+    });
+  }catch(e){}
+  if(navigator.vibrate) navigator.vibrate([200,80,200]);
+}
+
+/* ---------- Firebase order listener ---------- */
+function initOrderListener(){
+  db.ref('panggilan').on('value', (snapshot) => {
+    allOrdersCache = snapshot.val() || {};
+    processOrders();
+  });
+}
+
+function processOrders(){
+  const ids = Object.keys(allOrdersCache);
+
+  // Active order for this montir
+  if(activeOrderId && allOrdersCache[activeOrderId]){
+    renderActiveOrder(activeOrderId, allOrdersCache[activeOrderId]);
+  } else if(activeOrderId && !allOrdersCache[activeOrderId]){
+    activeOrderId = null;
+    localStorage.removeItem('activeOrderId');
+    renderActiveOrder(null);
+  } else {
+    renderActiveOrder(null);
+  }
+
+  // History for this montir
+  renderHistory(ids);
+
+  // Queue new pending orders not yet seen
+  if(!activeOrderId){
+    pendingQueue = ids.filter(id => {
+      const o = allOrdersCache[id];
+      return o && (!o.status || o.status === 'pending') && !seenOrderIds.includes(id);
+    });
+    if(isOnline) checkQueueForIncoming();
+  }
+}
+
+function checkQueueForIncoming(){
+  if(currentIncomingId || activeOrderId || pendingQueue.length === 0) return;
+  const nextId = pendingQueue[0];
+  showIncomingOrder(nextId, allOrdersCache[nextId]);
+}
+
+function showIncomingOrder(id, order){
+  if(!order) return;
+  currentIncomingId = id;
+  document.getElementById('incName').textContent = order.nama || 'Pelanggan';
+  document.getElementById('incLokasi').textContent = order.lokasi || '-';
+  document.getElementById('incMobil').textContent = order.mobil || '-';
+  document.getElementById('incLayanan').textContent = order.layanan || '-';
+  document.getElementById('incomingOverlay').classList.add('show');
+  playBeep();
+
+  let timeLeft = 100;
+  const fill = document.getElementById('timerFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft -= 2;
+    fill.style.transition = 'width .2s linear';
+    fill.style.width = Math.max(timeLeft,0) + '%';
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      dismissIncoming(id, false);
+    }
+  }, 400);
+}
+
+function dismissIncoming(id, wasAccepted){
+  clearInterval(timerInterval);
+  document.getElementById('incomingOverlay').classList.remove('show');
+  if(!wasAccepted){
+    seenOrderIds.push(id);
+    localStorage.setItem('seenOrderIds', JSON.stringify(seenOrderIds));
+  }
+  currentIncomingId = null;
+  pendingQueue = pendingQueue.filter(x => x !== id);
+  setTimeout(checkQueueForIncoming, 500);
+}
+
+document.getElementById('rejectBtn').addEventListener('click', () => {
+  dismissIncoming(currentIncomingId, false);
+});
+
+document.getElementById('acceptBtn').addEventListener('click', () => {
+  const id = currentIncomingId;
+  if(!id || !db) return;
+  db.ref('panggilan/' + id + '/status').transaction((current) => {
+    if(current === 'pending' || current === null || current === undefined) return 'diterima';
+    return; // abort — sudah diambil montir lain
+  }, (error, committed) => {
+    if(committed){
+      db.ref('panggilan/' + id).update({ montir: montir.nama, montirHp: montir.hp, step: 1 });
+      activeOrderId = id;
+      localStorage.setItem('activeOrderId', id);
+      dismissIncoming(id, true);
+      showToast('✓ Order diterima!');
+    } else {
+      showToast('Order sudah diambil montir lain');
+      dismissIncoming(id, false);
+    }
+  });
+});
+
+/* ---------- Active order card ---------- */
+function renderActiveOrder(id, order){
+  const wrap = document.getElementById('activeOrderWrap');
+  if(!id || !order){
+    wrap.innerHTML = '<div class="empty-state"><div class="ic">🔧</div>Belum ada order aktif saat ini.</div>';
+    return;
+  }
+  const step = order.step || 1;
+  const stepLabels = ['Menuju Lokasi','Sampai di Lokasi','Selesai'];
+  const waNum = (order.hp || '').replace(/[^0-9]/g,'').replace(/^0/,'62');
+  const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(order.lokasi || '');
+
+  wrap.innerHTML = `
+    <div class="order-card">
+      <div class="top-row">
+        <div>
+          <div class="cust-name">${escapeHtml(order.nama || '-')}</div>
+          <div style="font-size:12px; opacity:0.55; margin-top:2px;">${escapeHtml(order.mobil || '-')}</div>
+        </div>
+        <span class="layanan-tag">${escapeHtml(order.layanan || '-')}</span>
+      </div>
+      <div class="info-row"><span class="ic">📍</span><span class="val">${escapeHtml(order.lokasi || '-')}</span></div>
+      <div class="info-row"><span class="ic">📞</span><span class="val">${escapeHtml(order.hp || '-')}</span></div>
+      ${order.keluhan ? `<div class="info-row"><span class="ic">📝</span><span class="val">${escapeHtml(order.keluhan)}</span></div>` : ''}
+
+      <div class="steps">
+        <div class="step ${step>=1?'done':''}"></div>
+        <div class="step ${step>=2?'done':''}"></div>
+        <div class="step ${step>=3?'done':''}"></div>
+      </div>
+      <div style="font-size:12px; opacity:0.55; margin-bottom:4px;">Status: <b style="color:var(--teal-deep);">${stepLabels[step-1]}</b></div>
+
+      <div class="action-row">
+        <a class="btn btn-call" href="tel:${escapeHtml(order.hp||'')}">📞 Telepon</a>
+        <a class="btn btn-call" href="https://wa.me/${waNum}" target="_blank">💬 Chat</a>
+        <a class="btn btn-nav" href="${mapsUrl}" target="_blank">🧭 Navigasi</a>
+      </div>
+
+      ${step < 3 ? `<button class="btn-advance" id="advanceBtn">${step===1?'Sampai di Lokasi':'Selesaikan Order'}</button>` : ''}
+      <button class="btn-cancel" id="cancelOrderBtn">Batalkan Order</button>
+    </div>
+  `;
+
+  const advanceBtn = document.getElementById('advanceBtn');
+  if(advanceBtn){
+    advanceBtn.addEventListener('click', () => {
+      const nextStep = step + 1;
+      const updates = { step: nextStep };
+      if(nextStep === 3) updates.status = 'selesai';
+      db.ref('panggilan/' + id).update(updates).then(() => {
+        if(nextStep === 3){
+          activeOrderId = null;
+          localStorage.removeItem('activeOrderId');
+          showToast('✓ Order selesai! Kerja bagus.');
+        }
+      });
+    });
+  }
+  document.getElementById('cancelOrderBtn').addEventListener('click', () => {
+    if(!confirm('Batalkan order ini? Order akan kembali ke antrian.')) return;
+    db.ref('panggilan/' + id).update({ status: 'pending', step: null, montir: null, montirHp: null }).then(() => {
+      activeOrderId = null;
+      localStorage.removeItem('activeOrderId');
+      showToast('Order dibatalkan');
+    });
+  });
+}
+
+/* ---------- History ---------- */
+function renderHistory(ids){
+  const wrap = document.getElementById('historyWrap');
+  if(!montir){ return; }
+  const done = ids
+    .map(id => ({ id, ...allOrdersCache[id] }))
+    .filter(o => o.status === 'selesai' && o.montir === montir.nama)
+    .sort((a,b) => (b.waktu||'').localeCompare(a.waktu||''));
+
+  document.getElementById('accTotal').textContent = done.length;
+
+  if(done.length === 0){
+    wrap.innerHTML = '<div class="empty-state"><div class="ic">📋</div>Belum ada riwayat order.</div>';
+    return;
+  }
+  wrap.innerHTML = done.map(o => `
+    <div class="hist-item">
+      <div>
+        <div class="l">${escapeHtml(o.nama || '-')}</div>
+        <div class="layanan">${escapeHtml(o.layanan || '-')}</div>
+      </div>
+      <div class="r">${o.waktu ? new Date(o.waktu).toLocaleDateString('id-ID', {day:'2-digit',month:'short'}) : ''}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+initUI();
+</script>
+</body>
+</html>

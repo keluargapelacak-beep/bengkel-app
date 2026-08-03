@@ -467,6 +467,10 @@ function processOrders(){
   // Active order for this montir
   if(activeOrderId && allOrdersCache[activeOrderId]){
     renderActiveOrder(activeOrderId, allOrdersCache[activeOrderId]);
+    const ord = allOrdersCache[activeOrderId];
+    if(locationWatchId === null && ord.status === 'diterima' && (ord.step||1) < 3){
+      startLocationSharing(activeOrderId);
+    }
   } else if(activeOrderId && !allOrdersCache[activeOrderId]){
     activeOrderId = null;
     localStorage.removeItem('activeOrderId');
@@ -549,12 +553,38 @@ document.getElementById('acceptBtn').addEventListener('click', () => {
       localStorage.setItem('activeOrderId', id);
       dismissIncoming(id, true);
       showToast('✓ Order diterima!');
+      startLocationSharing(id);
     } else {
       showToast('Order sudah diambil montir lain');
       dismissIncoming(id, false);
     }
   });
 });
+
+/* ---------- Live location sharing ke customer ---------- */
+let locationWatchId = null;
+
+function startLocationSharing(orderId){
+  stopLocationSharing();
+  if(!navigator.geolocation) return;
+  locationWatchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      db.ref('panggilan/' + orderId).update({
+        montirLat: pos.coords.latitude,
+        montirLng: pos.coords.longitude
+      });
+    },
+    (err) => { console.warn('Gagal ambil lokasi:', err.message); },
+    { enableHighAccuracy: true, maximumAge: 8000, timeout: 10000 }
+  );
+}
+
+function stopLocationSharing(){
+  if(locationWatchId !== null && navigator.geolocation){
+    navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId = null;
+  }
+}
 
 /* ---------- Active order card ---------- */
 function renderActiveOrder(id, order){
@@ -609,6 +639,7 @@ function renderActiveOrder(id, order){
         if(nextStep === 3){
           activeOrderId = null;
           localStorage.removeItem('activeOrderId');
+          stopLocationSharing();
           showToast('✓ Order selesai! Kerja bagus.');
         }
       });
@@ -616,9 +647,10 @@ function renderActiveOrder(id, order){
   }
   document.getElementById('cancelOrderBtn').addEventListener('click', () => {
     if(!confirm('Batalkan order ini? Order akan kembali ke antrian.')) return;
-    db.ref('panggilan/' + id).update({ status: 'pending', step: null, montir: null, montirHp: null }).then(() => {
+    db.ref('panggilan/' + id).update({ status: 'pending', step: null, montir: null, montirHp: null, montirLat: null, montirLng: null }).then(() => {
       activeOrderId = null;
       localStorage.removeItem('activeOrderId');
+      stopLocationSharing();
       showToast('Order dibatalkan');
     });
   });

@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
     --bg: #0A0D0C;
@@ -89,6 +90,29 @@
   }
 
   .not-found{text-align:center; padding:60px 20px; color:var(--text-dim);}
+
+  .map-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    overflow:hidden; margin-bottom:18px; display:none;
+  }
+  .map-card.show{display:block;}
+  #map{width:100%; height:220px; background:var(--panel-deep);}
+  .map-eta{
+    display:flex; align-items:center; gap:8px; padding:10px 14px;
+    font-family:'JetBrains Mono'; font-size:12px; color:var(--text-dim); border-top:1px solid var(--line);
+  }
+  .map-eta b{color:var(--lime); font-weight:600;}
+
+  .leaflet-marker-icon.montir-pin{
+    background:var(--amber); border:3px solid var(--panel-deep); border-radius:50%;
+    width:26px !important; height:26px !important; display:flex; align-items:center; justify-content:center;
+    font-size:14px; box-shadow:0 2px 8px rgba(0,0,0,0.5);
+  }
+  .leaflet-marker-icon.cust-pin{
+    background:var(--lime); border:3px solid var(--panel-deep); border-radius:50%;
+    width:22px !important; height:22px !important; display:flex; align-items:center; justify-content:center;
+    font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,0.5);
+  }
 </style>
 </head>
 <body>
@@ -100,9 +124,15 @@
     <div class="not-found">Memuat data panggilan...</div>
   </div>
 
+  <div class="map-card" id="mapCard">
+    <div id="map"></div>
+    <div class="map-eta" id="mapEta">📡 Menunggu update lokasi montir...</div>
+  </div>
+
   <a class="back-link" href="index.html">← Kembali ke beranda</a>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
@@ -203,6 +233,71 @@
         ${order.keluhan ? `<div class="detail-row"><span class="ic">📝</span><span class="lbl">Keluhan</span><span class="val">${escapeHtml(order.keluhan)}</span></div>` : ''}
       </div>
     `;
+
+    updateMap(order, status);
+  }
+
+  /* ---------- Peta live (Leaflet + OpenStreetMap, gratis tanpa API key) ---------- */
+  let map = null, montirMarker = null, custMarker = null;
+  const mapCard = document.getElementById('mapCard');
+  const mapEta = document.getElementById('mapEta');
+
+  function ensureMap(){
+    if(map) return;
+    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-6.2, 106.8], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19
+    }).addTo(map);
+  }
+
+  function distanceKm(lat1, lng1, lat2, lng2){
+    const R = 6371;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLng = (lng2-lng1) * Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function updateMap(order, status){
+    const hasMontir = typeof order.montirLat === 'number' && typeof order.montirLng === 'number';
+    const hasCust = typeof order.lokasiLat === 'number' && typeof order.lokasiLng === 'number';
+
+    if(status === 'selesai' || (!hasMontir && !hasCust)){
+      mapCard.classList.remove('show');
+      return;
+    }
+
+    mapCard.classList.add('show');
+    ensureMap();
+    setTimeout(()=>map.invalidateSize(), 50);
+
+    const montirIcon = L.divIcon({ className: 'montir-pin', html: '🔧', iconSize: [26,26] });
+    const custIcon = L.divIcon({ className: 'cust-pin', html: '📍', iconSize: [22,22] });
+
+    const points = [];
+
+    if(hasMontir){
+      const pos = [order.montirLat, order.montirLng];
+      if(!montirMarker){ montirMarker = L.marker(pos, { icon: montirIcon }).addTo(map); }
+      else { montirMarker.setLatLng(pos); }
+      points.push(pos);
+    }
+    if(hasCust){
+      const pos = [order.lokasiLat, order.lokasiLng];
+      if(!custMarker){ custMarker = L.marker(pos, { icon: custIcon }).addTo(map); }
+      else { custMarker.setLatLng(pos); }
+      points.push(pos);
+    }
+
+    if(points.length === 2){
+      map.fitBounds(points, { padding: [30,30] });
+      const km = distanceKm(order.montirLat, order.montirLng, order.lokasiLat, order.lokasiLng);
+      const menit = Math.max(1, Math.round((km / 30) * 60));
+      mapEta.innerHTML = `🔧 Jarak montir: <b>${km.toFixed(1)} km</b> — estimasi <b>~${menit} menit</b>`;
+    } else if(points.length === 1){
+      map.setView(points[0], 15);
+      mapEta.textContent = hasMontir ? '📡 Menunggu lokasi Anda...' : '📡 Menunggu montir mulai berbagi lokasi...';
+    }
   }
 </script>
 

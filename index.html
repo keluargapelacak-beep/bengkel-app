@@ -8,16 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #12171B;
-    --bg-alt: #171D22;
-    --panel: #1E262D;
-    --panel-deep: #0C1013;
-    --text: #F4EFE6;
-    --text-dim: rgba(244,239,230,0.60);
-    --amber: #FFA23C;
-    --amber-deep: #E0821A;
-    --amber-soft: rgba(255,162,60,0.14);
-    --line: rgba(244,239,230,0.10);
+    --bg: #0A0D0C;
+    --bg-alt: #0F1A17;
+    --panel: #152420;
+    --panel-deep: #060907;
+    --text: #EFF5F1;
+    --text-dim: rgba(239,245,241,0.62);
+    --amber: #FF8A1E;
+    --amber-deep: #D96C00;
+    --amber-soft: rgba(255,138,30,0.14);
+    --lime: #C6FF3D;
+    --line: rgba(239,245,241,0.10);
     --radius: 14px;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -50,14 +51,14 @@
     font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:0.04em;
   }
   .status-dot{
-    width:9px; height:9px; border-radius:50%; background:var(--amber);
-    box-shadow:0 0 0 0 rgba(255,162,60,0.6);
+    width:9px; height:9px; border-radius:50%; background:var(--lime);
+    box-shadow:0 0 0 0 rgba(198,255,61,0.6);
     animation:pulse 1.8s infinite;
   }
   @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(255,162,60,0.55);}
-    70%{box-shadow:0 0 0 9px rgba(255,162,60,0);}
-    100%{box-shadow:0 0 0 0 rgba(255,162,60,0);}
+    0%{box-shadow:0 0 0 0 rgba(198,255,61,0.55);}
+    70%{box-shadow:0 0 0 9px rgba(198,255,61,0);}
+    100%{box-shadow:0 0 0 0 rgba(255,138,30,0);}
   }
 
   header{
@@ -87,7 +88,7 @@
   .hero{padding:72px 0 64px; position:relative; overflow:hidden;}
   .hero::before{
     content:''; position:absolute; top:-160px; right:-160px; width:520px; height:520px;
-    background:radial-gradient(circle, rgba(255,162,60,0.20) 0%, rgba(255,162,60,0) 70%);
+    background:radial-gradient(circle, rgba(255,138,30,0.20) 0%, rgba(255,138,30,0) 70%);
     pointer-events:none;
   }
   .hero-grid{display:grid; grid-template-columns:1.1fr 0.9fr; gap:48px; align-items:center; position:relative;}
@@ -107,7 +108,7 @@
   }
   .btn:hover{transform:translateY(-2px);}
   .btn-primary{background:var(--amber); color:var(--panel-deep);}
-  .btn-primary:hover{box-shadow:0 10px 26px rgba(255,162,60,0.30); background:var(--amber-deep); color:#fff;}
+  .btn-primary:hover{box-shadow:0 10px 26px rgba(255,138,30,0.30); background:var(--amber-deep); color:#fff;}
   .btn-outline{border:1.5px solid var(--amber); color:var(--amber);}
   .btn-outline:hover{background:var(--amber); color:var(--panel-deep);}
 
@@ -119,7 +120,7 @@
   .dash{
     background:var(--panel-deep); border-radius:20px; padding:26px;
     color:var(--text); position:relative; border:1px solid var(--line);
-    box-shadow:0 0 70px -18px rgba(255,162,60,0.35);
+    box-shadow:0 0 70px -18px rgba(255,138,30,0.35);
   }
   .dash-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
   .dash-title{font-family:'JetBrains Mono'; font-size:12px; opacity:0.55; letter-spacing:0.06em;}
@@ -144,6 +145,24 @@
   .sec-head p{color:var(--text-dim); margin-top:10px; font-size:15.5px;}
 
   .alt{background:var(--bg-alt);}
+
+  /* --- Signature: garis marka jalan sebagai pembatas antar section --- */
+  .lane-divider{
+    height:3px; width:100%;
+    background-image:repeating-linear-gradient(90deg, var(--amber) 0 34px, transparent 34px 58px);
+    opacity:0.55;
+  }
+
+  /* --- Signature: lampu beacon darurat berputar di belakang hero --- */
+  .beacon{
+    position:absolute; top:50%; left:50%; width:900px; height:900px;
+    transform:translate(-50%,-50%);
+    background:conic-gradient(from 0deg, transparent 0deg, rgba(255,138,30,0.22) 18deg, transparent 46deg, transparent 180deg, rgba(198,255,61,0.14) 198deg, transparent 226deg, transparent 360deg);
+    animation:beacon-spin 7s linear infinite;
+    pointer-events:none; z-index:0;
+  }
+  @keyframes beacon-spin{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .beacon{ animation:none; } }
   .grid-6{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
   @media(max-width:860px){ .grid-6{grid-template-columns:repeat(2,1fr);} }
   @media(max-width:560px){ .grid-6{grid-template-columns:1fr;} }
@@ -221,7 +240,7 @@
   .booking p{opacity:0.75; font-size:14.5px; margin-bottom:20px;}
   .booking .wa-note{
     display:flex; gap:10px; align-items:flex-start; background:var(--amber-soft);
-    border:1px solid rgba(255,162,60,0.35); border-radius:12px; padding:14px 16px; font-size:13px; opacity:0.92;
+    border:1px solid rgba(255,138,30,0.35); border-radius:12px; padding:14px 16px; font-size:13px; opacity:0.92;
   }
   form{display:flex; flex-direction:column; gap:14px;}
   .field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
@@ -281,6 +300,7 @@
 </header>
 
 <section class="hero">
+  <div class="beacon"></div>
   <div class="wrap hero-grid">
     <div>
       <span class="status-badge"><span class="status-dot"></span> STATUS: SIAP DIPANGGIL — 24 JAM</span>
@@ -314,6 +334,7 @@
     </div>
   </div>
 </section>
+<div class="lane-divider"></div>
 
 <section id="kenapa" class="alt">
   <div class="wrap">
@@ -405,6 +426,7 @@
     </div>
   </div>
 </section>
+<div class="lane-divider"></div>
 
 <section id="booking" class="alt">
   <div class="wrap">
@@ -432,8 +454,25 @@
         </div>
         <div class="field-row">
           <div>
+            <label>MERK & MODEL</label>
+            <input type="text" id="fMerk" placeholder="Contoh: Toyota Avanza" required>
+          </div>
+          <div>
+            <label>TAHUN KENDARAAN</label>
+            <select id="fTahun" required></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
             <label>JENIS KENDARAAN</label>
-            <input type="text" id="fMobil" placeholder="Contoh: Avanza 2018" required>
+            <select id="fJenis">
+              <option>Sedan</option>
+              <option>Hatchback</option>
+              <option selected>MPV</option>
+              <option>SUV</option>
+              <option>Pickup / Bak Terbuka</option>
+              <option>Lainnya</option>
+            </select>
           </div>
           <div>
             <label>JENIS LAYANAN</label>
@@ -531,13 +570,24 @@
     };
   }
 
+  (function fillTahunOptions(){
+    const sel = document.getElementById('fTahun');
+    const now = new Date().getFullYear();
+    let opts = '<option value="" disabled selected>Pilih tahun</option>';
+    for(let y = now; y >= 1995; y--){ opts += `<option value="${y}">${y}</option>`; }
+    sel.innerHTML = opts;
+  })();
+
   document.getElementById('bookingForm').addEventListener('submit', function(e){
     e.preventDefault();
+    const merk = document.getElementById('fMerk').value;
+    const jenis = document.getElementById('fJenis').value;
+    const tahun = document.getElementById('fTahun').value;
     const data = {
       nama: document.getElementById('fNama').value,
       hp: document.getElementById('fHp').value,
       lokasi: document.getElementById('fLokasi').value,
-      mobil: document.getElementById('fMobil').value,
+      mobil: `${merk} — ${jenis}, Tahun ${tahun}`,
       layanan: document.getElementById('fLayanan').value,
       keluhan: document.getElementById('fKeluhan').value,
       waktu: new Date().toISOString(),
@@ -551,12 +601,16 @@
       window.open(`https://wa.me/6282112519473?text=${text}`, '_blank');
     }
 
+    function goToTracking(orderId){
+      window.location.href = `lacak.html?id=${orderId}`;
+    }
+
     if(dbReady && window.firebase){
       firebase.database().ref('panggilan').push(data)
-        .then(()=>{
-          msgEl.style.color = '#FFA23C';
-          msgEl.textContent = '✓ Panggilan terkirim! Mengarahkan ke WhatsApp...';
-          setTimeout(goToWhatsApp, 900);
+        .then((ref)=>{
+          msgEl.style.color = '#C6FF3D';
+          msgEl.textContent = '✓ Panggilan terkirim! Mengalihkan ke halaman pelacakan...';
+          setTimeout(()=>goToTracking(ref.key), 700);
         })
         .catch(()=>{
           msgEl.style.color = '#f2a3a3';
@@ -564,7 +618,7 @@
           setTimeout(goToWhatsApp, 900);
         });
     } else {
-      msgEl.style.color = '#FFA23C';
+      msgEl.style.color = '#C6FF3D';
       msgEl.textContent = '✓ Mengarahkan ke WhatsApp...';
       setTimeout(goToWhatsApp, 500);
     }
